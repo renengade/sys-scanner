@@ -120,16 +120,16 @@ func TestScanPATH_AIBinaryBypass(t *testing.T) {
 
 	for _, p := range programs {
 		if p.Name == "cursor" {
-			if p.IsAITool != "true" {
-				t.Errorf("expected cursor IsAITool=true, got %q", p.IsAITool)
+			if !p.IsAITool {
+				t.Errorf("expected cursor IsAITool=true, got %v", p.IsAITool)
 			}
 			if p.AIToolName != "cursor" {
 				t.Errorf("expected AIToolName=cursor, got %q", p.AIToolName)
 			}
 		}
 		if p.Name == "random-tool" {
-			if p.IsAITool != "" {
-				t.Errorf("expected random-tool IsAITool empty, got %q", p.IsAITool)
+			if p.IsAITool {
+				t.Errorf("expected random-tool IsAITool=false, got %v", p.IsAITool)
 			}
 		}
 	}
@@ -150,8 +150,8 @@ func TestScanPATH_AIBinaryBypassWithEmptyAllowlist(t *testing.T) {
 	for _, p := range programs {
 		if p.Name == "claude" {
 			found = true
-			if p.IsAITool != "true" {
-				t.Errorf("expected claude IsAITool=true, got %q", p.IsAITool)
+			if !p.IsAITool {
+				t.Errorf("expected claude IsAITool=true, got %v", p.IsAITool)
 			}
 		}
 	}

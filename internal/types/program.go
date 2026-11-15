@@ -8,7 +8,7 @@ type Program struct {
 	Publisher       string            `json:"publisher"`
 	InstallLocation string            `json:"install_location"`
 	Source          string            `json:"source"`
-	IsAITool        string            `json:"is_ai_tool"`
+	IsAITool        bool              `json:"is_ai_tool"`
 	AIToolName      string            `json:"ai_tool_name"`
 	RawMetadata     map[string]string `json:"raw_metadata,omitempty"`
 }

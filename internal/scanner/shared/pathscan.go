@@ -118,7 +118,7 @@ func scanDir(ctx context.Context, dir string, allowSet, aiSet map[string]struct{
 			Source:          "PATH",
 		}
 		if isAI {
-			p.IsAITool = "true"
+			p.IsAITool = true
 			p.AIToolName = baseName
 		}
 

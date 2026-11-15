@@ -1,0 +1,21 @@
+# Build output
+/dist/
+
+# Local build artifacts
+*.test
+*.out
+sys-scanner
+sys-scanner.exe
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.omo/
+
+# Generated inventory data
+sys-scanner-summary.xlsx
+sys-scanner-summary.xlsx.bak
+sys-scanner-summary.csv
+sys-scanner-summary.csv.bak
+sys-scanner-report.html
+inventory*.json
