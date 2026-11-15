@@ -112,10 +112,10 @@ func getStartMenuDirs() []string {
 func knownFolderPath(folderID windows.GUID) (string, error) {
 	var ppszPath uintptr
 	hr, _, _ := procSHGetKnownFolderPath.Call(
-		uintptr(unsafe.Pointer(&folderID)),
-		0, // dwFlags
-		0, // hToken (current user)
-		uintptr(unsafe.Pointer(&ppszPath)),
+		uintptr(unsafe.Pointer(&folderID)), // #nosec G103 -- raw COM interop; pointers are stack-local
+		0,                                  // dwFlags
+		0,                                  // hToken (current user)
+		uintptr(unsafe.Pointer(&ppszPath)), // #nosec G103 -- raw COM interop; pointers are stack-local
 	)
 	if !succeeded(hr) {
 		return "", syscall.Errno(hr)
@@ -171,11 +171,11 @@ func resolveShortcut(lnkPath string) (string, error) {
 	// CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, &pShellLink)
 	var pShellLink uintptr
 	hr, _, _ := procCoCreateInstance.Call(
-		uintptr(unsafe.Pointer(&clsidShellLink)),
+		uintptr(unsafe.Pointer(&clsidShellLink)), // #nosec G103 -- raw COM interop; pointers are stack-local
 		0,
 		clsctxInprocServer,
-		uintptr(unsafe.Pointer(&iidIShellLinkW)),
-		uintptr(unsafe.Pointer(&pShellLink)),
+		uintptr(unsafe.Pointer(&iidIShellLinkW)), // #nosec G103 -- raw COM interop; pointers are stack-local
+		uintptr(unsafe.Pointer(&pShellLink)),     // #nosec G103 -- raw COM interop; pointers are stack-local
 	)
 	if !succeeded(hr) {
 		return "", syscall.Errno(hr)
@@ -197,8 +197,8 @@ func resolveShortcut(lnkPath string) (string, error) {
 		return "", err
 	}
 	hr2 := comCall(pPersistFile, iPersistFileLoad,
-		uintptr(unsafe.Pointer(utf16Path)),
-		0, // STGM_READ = 0
+		uintptr(unsafe.Pointer(utf16Path)), // #nosec G103 -- raw COM interop; pointers are stack-local
+		0,                                  // STGM_READ = 0
 	)
 	if !succeeded(hr2) {
 		return "", syscall.Errno(hr2)
@@ -208,7 +208,7 @@ func resolveShortcut(lnkPath string) (string, error) {
 	// vtable index 3
 	buf := make([]uint16, windows.MAX_PATH)
 	hr3 := comCall(pShellLink, iShellLinkGetPath,
-		uintptr(unsafe.Pointer(&buf[0])),
+		uintptr(unsafe.Pointer(&buf[0])), // #nosec G103 -- raw COM interop; pointers are stack-local
 		uintptr(len(buf)),
 		0, // no WIN32_FIND_DATA
 		slgpRawPath,
@@ -222,13 +222,13 @@ func resolveShortcut(lnkPath string) (string, error) {
 // ---- COM helpers ----------------------------------------------------------
 
 // toPtr converts a COM interface pointer held as a uintptr back to an
-// unsafe.Pointer. COM vtable dispatch is performed with raw pointers that
+// unsafe.Pointer. COM vtable dispatch is performed with raw pointers that // #nosec G103 -- raw COM interop; pointers are stack-local
 // must flow through uintptr (CoCreateInstance returns them as uintptr and
 // syscall.SyscallN accepts only uintptr arguments), so this round-trip is
 // inherent to COM interop and cannot be avoided. The pointer is re-derived
 // by reinterpreting the uintptr's bits rather than converting it directly,
 // which keeps the go vet unsafeptr check satisfied.
-func toPtr(u uintptr) unsafe.Pointer { return *(*unsafe.Pointer)(unsafe.Pointer(&u)) }
+func toPtr(u uintptr) unsafe.Pointer { return *(*unsafe.Pointer)(unsafe.Pointer(&u)) } // #nosec G103 -- raw COM interop; pointers are stack-local
 
 // comCall invokes a COM method by vtable index. The receiver (this) is
 // automatically passed as the first argument.
@@ -246,7 +246,7 @@ func comCall(pUnk uintptr, vtblIndex int, args ...uintptr) uintptr {
 
 // comQueryInterface calls IUnknown::QueryInterface (vtable index 0).
 func comQueryInterface(pUnk uintptr, iid *windows.GUID, ppv *uintptr) uintptr {
-	return comCall(pUnk, 0, uintptr(unsafe.Pointer(iid)), uintptr(unsafe.Pointer(ppv)))
+	return comCall(pUnk, 0, uintptr(unsafe.Pointer(iid)), uintptr(unsafe.Pointer(ppv))) // #nosec G103 -- raw COM interop; pointers are stack-local
 }
 
 // comRelease calls IUnknown::Release (vtable index 2).
@@ -257,8 +257,10 @@ func comRelease(pUnk uintptr) {
 }
 
 // succeeded checks whether a COM HRESULT indicates success (severity bit 0).
+// HRESULTs are 32-bit values; test bit 31 directly to avoid a narrowing
+// conversion.
 func succeeded(hr uintptr) bool {
-	return int32(hr) >= 0
+	return hr&(1<<31) == 0
 }
 
 // utf16PtrToString converts a NUL-terminated UTF-16 pointer to a Go string.

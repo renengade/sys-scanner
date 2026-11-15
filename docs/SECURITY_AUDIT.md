@@ -59,14 +59,14 @@
 |------|------|------|
 | `govulncheck ./...` | Go 漏洞数据库 | **No vulnerabilities found** |
 | `gosec -quiet ./...` | Linux/Darwin build tag | **0 issues** |
-| `GOOS=windows gosec -quiet ./...` | Windows build tag | **0 issues** |
+| `GOOS=windows gosec -quiet ./...` | Windows build tag | **0 issues**（COM `unsafe` 调用与 HRESULT 位测试已标注/消除） |
 | `go vet ./...` Linux/Windows/macOS ARM | 静态检查 | clean |
 | `go test ./...` Linux/Windows/macOS runner | 单元测试 | PASS |
 
-`gosec` 中仅有的保留说明：
+`gosec` 说明：
 
-- `internal/scanner/windows/startmenu.go` 的 `unsafe` 调用用于 COM vtable 调用（IShellLink/IPersistFile），是该互操作方式的固有写法；指针仅指向本函数局部变量，未处理外部输入。
-- 若后续将 `gosec` 接入 CI，可对 `G103` 使用 `#nosec` 注释或在 job 中排除该规则。
+- `internal/scanner/windows/startmenu.go` 的 `unsafe` 调用用于 COM vtable 调用（IShellLink/IPersistFile），是该互操作方式的固有写法；指针仅指向本函数局部变量，未处理外部输入，已使用 `#nosec G103` 标注。
+- `succeeded(hr)` 改为直接测试 HRESULT 的 31 位符号位，消除 `uintptr -> int32` 缩窄转换（G115）。
 
 ## 接受的风险
 
