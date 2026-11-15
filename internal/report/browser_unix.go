@@ -18,6 +18,8 @@ func launchBrowser(path string) error {
 // launchDetached starts cmd with the given argv, detaching the child
 // process so it can outlive the parent.
 func launchDetached(name string, args ...string) error {
+	// #nosec G204 -- name comes from a fixed launcher allowlist
+	// (open/xdg-open/...) and is never user-controlled.
 	cmd := exec.Command(name, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {

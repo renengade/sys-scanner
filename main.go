@@ -24,7 +24,7 @@ import (
 
 // version is stamped into the JSON inventory and printed by -version.
 // It can be overridden at build time with -ldflags "-X main.version=...".
-var version = "1.2.0"
+var version = "1.2.1"
 
 // contextDetector is an optional extension of the platform detector that can
 // honour a deadline and return partial results instead of being abandoned.

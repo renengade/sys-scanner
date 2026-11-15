@@ -1,8 +1,31 @@
-# Release Notes — sys-scanner 1.2.0
+# Release Notes — sys-scanner
 
-## Version
+## 1.2.1
 
-1.2.0
+### Security
+
+- Upgraded `github.com/xuri/excelize/v2` to v2.11.1, fixing 11 upstream
+  vulnerabilities reported by `govulncheck` (panics, out-of-bounds/OOM in
+  spreadsheet parsing).
+- Upgraded `golang.org/x/{crypto,net,sys,text}`.
+- Windows subprocess hardening: `powershell.exe`, `wsl.exe`, `rundll32.exe`
+  and `tasklist.exe` are launched from `%SystemRoot%\System32` by absolute
+  path so they cannot be substituted from the current directory or a
+  user-writable PATH entry.
+- Tightened output directory permissions to `0700` (files remain `0600`).
+- Added `SECURITY.md`, a security audit document and CI jobs for `gosec`
+  (Linux/Darwin and Windows build tags) and `govulncheck`.
+- HTML report data model now uses plain strings; `html/template` performs the
+  contextual escaping (removing `gosec`-style "unsafe HTML" findings and
+  keeping the same XSS guarantees).
+- The summary workbook treats every value as a string cell; Excelize removes
+  formulas, so names starting with `=` cannot become formulas.
+
+### Build
+
+- Requires Go 1.26 or later (`github.com/xuri/excelize/v2` v2.11.1 needs it).
+
+## 1.2.0
 
 ## Binaries
 

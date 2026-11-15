@@ -145,7 +145,7 @@ Schema-versioned (`schema_version: "1.1"`), suitable for a central collector:
 ```json
 {
   "schema_version": "1.1",
-  "scanner_version": "1.2.0",
+  "scanner_version": "1.2.1",
   "generated_at": "2026-11-15T08:00:00Z",
   "generated_at_local": "2026-11-15 16:00:00 CST",
   "host": {
@@ -207,7 +207,7 @@ Entries are normalized by name, stripped of version/architecture suffixes, group
 
 ### Build
 
-Requires Go 1.25+.
+Requires Go 1.26+.
 
 ```bash
 make all      # all five binaries
@@ -217,12 +217,13 @@ make vet      # go vet ./...
 
 Individual targets: `make windows`, `make linux-amd64`, `make linux-arm64`, `make macos-amd64`, `make macos-arm64`.
 
-### Privacy and security
+### Security
 
 - The tool never opens a network connection.
 - Scans are read-only.
 - Reports, inventories, and summaries are written atomically with `0600` permissions where supported.
 - Generated data contains hostnames, IP/MAC addresses, paths, and software names. Treat it as sensitive.
+- Dependencies are pinned with `go.sum`; CI runs `go vet`, `gosec` and `govulncheck` (see [SECURITY.md](SECURITY.md) and [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md)).
 
 ### Limitations
 
@@ -398,7 +399,7 @@ name,version,publisher,location,source,is_ai_tool,ai_tool_name
 
 ### 构建
 
-需要 Go 1.25+：
+需要 Go 1.26+：
 
 ```bash
 make all      # 构建全部 5 个二进制
@@ -408,12 +409,13 @@ make vet      # 静态检查
 
 单独构建：`make windows`、`make linux-amd64`、`make linux-arm64`、`make macos-amd64`、`make macos-arm64`。
 
-### 隐私与安全
+### 安全
 
 - 不联网。
 - 只读扫描。
 - 报告、清单和汇总表原子写入，支持 POSIX 的系统使用 `0600` 权限。
 - 生成数据包含主机名、IP/MAC、路径和软件名称，请按敏感数据管理。
+- 依赖由 `go.sum` 锁定；CI 会运行 `go vet`、`gosec` 和 `govulncheck`（见 [SECURITY.md](SECURITY.md) 与 [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md)）。
 
 ### 已知限制
 

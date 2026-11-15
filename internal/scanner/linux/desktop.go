@@ -47,6 +47,8 @@ type desktopEntry struct {
 // parseDesktopFile parses a single .desktop file and returns the entry.
 // Returns (entry, true) on success, (zero, false) if the file should be skipped.
 func parseDesktopFile(path string) (desktopEntry, bool) {
+	// #nosec G304 -- path comes from walking fixed .desktop directories
+	// (/usr/share/applications, ...); it is never user-controlled.
 	f, err := os.Open(path)
 	if err != nil {
 		return desktopEntry{}, false

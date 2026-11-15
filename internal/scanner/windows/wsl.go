@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -55,7 +54,8 @@ func listWSLDistros() ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), wslListTimeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "wsl.exe", "-l", "-q")
+	// #nosec G204 -- absolute path under %SystemRoot%; arguments are fixed.
+	cmd := exec.CommandContext(ctx, windowsSystemToolPath("wsl.exe"), "-l", "-q")
 	// When sys-scanner is launched from inside WSL via interop, the current
 	// directory is a \\wsl.localhost\... UNC path. wsl.exe cannot translate
 	// that path into another distro, so run it from the Windows directory.
@@ -89,8 +89,10 @@ func probeDistro(distro string, tools []types.ToolSignature) ([]types.Program, e
 	ctx, cancel := context.WithTimeout(context.Background(), wslProbeTimeout)
 	defer cancel()
 
+	// #nosec G204 -- distro names come from wsl.exe -l -q on the local
+	// machine, and the probe script is generated from a static signature DB.
 	cmd := exec.CommandContext(ctx,
-		"wsl.exe", "-d", distro, "--", "bash", "-lc", buildWSLProbeScript(tools),
+		windowsSystemToolPath("wsl.exe"), "-d", distro, "--", "bash", "-lc", buildWSLProbeScript(tools),
 	)
 	cmd.Dir = windowsSystemDir()
 	var stdout, stderr bytes.Buffer
@@ -107,10 +109,7 @@ func probeDistro(distro string, tools []types.ToolSignature) ([]types.Program, e
 // This avoids UNC current-directory translation failures when sys-scanner is
 // itself running through WSL interop.
 func windowsSystemDir() string {
-	if root := os.Getenv("SystemRoot"); root != "" {
-		return root
-	}
-	return `C:\Windows`
+	return windowsRootDir()
 }
 
 // decodeUTF16LEIfNeeded decodes wsl.exe output when it is UTF-16LE (detected

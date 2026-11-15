@@ -11,7 +11,7 @@
 #   make clean          — remove dist/
 
 MODULE   := sys-scanner
-VERSION  ?= 1.2.0
+VERSION  ?= 1.2.1
 DIST     := dist
 LDFLAGS  := -s -w -X main.version=$(VERSION)
 GOFLAGS  := -trimpath

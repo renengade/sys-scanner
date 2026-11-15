@@ -73,7 +73,7 @@ func scanAppPathsView(root registry.Key, label string) ([]types.Program, error) 
 
 		// (Default) value holds the full executable path.
 		defaultVal, _, err := sk.GetStringValue("")
-		sk.Close()
+		_ = sk.Close()
 		if err != nil || defaultVal == "" {
 			continue
 		}

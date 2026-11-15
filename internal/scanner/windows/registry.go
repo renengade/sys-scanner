@@ -88,7 +88,7 @@ func scanRegistryView(view registryView) ([]types.Program, error) {
 			continue
 		}
 		vals := readRegistryStringValues(sk)
-		sk.Close()
+		_ = sk.Close()
 
 		if prog, ok := parseRegistryEntry(vals, view.source); ok {
 			programs = append(programs, prog)

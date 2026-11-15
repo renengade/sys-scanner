@@ -2,7 +2,6 @@ package report
 
 import (
 	"bytes"
-	"html/template"
 	"io"
 	"os"
 	"path/filepath"
@@ -16,18 +15,18 @@ import (
 // temp directory.
 const DefaultFilename = "sys-scanner-report.html"
 
-// ProgramView is the pre-escaped, template-safe representation of a single
-// Program. All string fields are HTML-escaped (via types.SafeString.HTMLEscape)
-// and stored as template.HTML so html/template treats them as trusted fragments
-// and does not double-escape. The IsAITool flag controls the ai-row class and
-// AI badge emission at template-render time.
+// ProgramView is the template-safe representation of a single Program. The
+// fields are plain strings; html/template performs contextual auto-escaping
+// at render time, so scanner-supplied values (application names, publishers,
+// paths) can never inject markup. The IsAITool flag controls the ai-row class
+// and AI badge emission at template-render time.
 type ProgramView struct {
-	Name            template.HTML
-	Version         template.HTML
-	Publisher       template.HTML
-	Source          template.HTML
-	InstallLocation template.HTML
-	AIToolName      template.HTML
+	Name            string
+	Version         string
+	Publisher       string
+	Source          string
+	InstallLocation string
+	AIToolName      string
 	IsAITool        bool
 }
 
@@ -35,12 +34,12 @@ type ProgramView struct {
 // every string field. Bool fields pass through unchanged.
 func NewProgramView(p types.Program) ProgramView {
 	return ProgramView{
-		Name:            template.HTML(types.SafeString(p.Name).HTMLEscape()),
-		Version:         template.HTML(types.SafeString(p.Version).HTMLEscape()),
-		Publisher:       template.HTML(types.SafeString(p.Publisher).HTMLEscape()),
-		Source:          template.HTML(types.SafeString(p.Source).HTMLEscape()),
-		InstallLocation: template.HTML(types.SafeString(p.InstallLocation).HTMLEscape()),
-		AIToolName:      template.HTML(types.SafeString(p.AIToolName).HTMLEscape()),
+		Name:            p.Name,
+		Version:         p.Version,
+		Publisher:       p.Publisher,
+		Source:          p.Source,
+		InstallLocation: p.InstallLocation,
+		AIToolName:      p.AIToolName,
 		IsAITool:        p.IsAITool,
 	}
 }
@@ -132,7 +131,7 @@ func GenerateTo(path string, data ReportData) (string, error) {
 		return "", err
 	}
 	dir := filepath.Dir(abs)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return "", err
 	}
 

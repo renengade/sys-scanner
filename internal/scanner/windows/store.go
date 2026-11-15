@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -24,6 +25,13 @@ const (
 
 // getCmdAppxPackage builds the PowerShell command text for Get-AppxPackage.
 // It is a pure function so it can be tested cross-platform.
+// windowsPowerShellPath returns the absolute path of Windows PowerShell under
+// %SystemRoot% so a hostile PATH or current directory cannot substitute a
+// different executable.
+func windowsPowerShellPath() string {
+	return filepath.Join(windowsRootDir(), "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
+}
+
 func getCmdAppxPackage() string {
 	return "Get-AppxPackage | Select-Object Name, Version, Publisher | ConvertTo-Json -Compress"
 }
@@ -62,8 +70,9 @@ func scanStoreAppsPowerShell() ([]types.Program, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), powerShellTimeout)
 	defer cancel()
 
+	// #nosec G204 -- absolute path under %SystemRoot%; arguments are fixed.
 	cmd := exec.CommandContext(ctx,
-		"powershell.exe",
+		windowsPowerShellPath(),
 		"-NoProfile",
 		"-NonInteractive",
 		"-Command",
@@ -149,7 +158,7 @@ func scanStoreAppsRegistry() ([]types.Program, error) {
 			continue
 		}
 		vals := readRegistryStringValues(sk)
-		sk.Close()
+		_ = sk.Close()
 
 		displayName := strings.TrimSpace(vals[valDisplayName])
 		if displayName == "" {

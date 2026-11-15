@@ -151,30 +151,6 @@ func TestDeduplicate_CaseInsensitiveSort(t *testing.T) {
 	}
 }
 
-func TestSafeString_HTMLEscape(t *testing.T) {
-	tests := []struct {
-		input    types.SafeString
-		expected string
-	}{
-		{"hello", "hello"},
-		{types.SafeString("<script>alert('xss')</script>"), "&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;"},
-		{types.SafeString(`say "hello" & goodbye`), "say &#34;hello&#34; &amp; goodbye"},
-		{types.SafeString("a < b > c & d \"e\" 'f'"), "a &lt; b &gt; c &amp; d &#34;e&#34; &#39;f&#39;"},
-		{"", ""},
-	}
-	for _, tt := range tests {
-		got := tt.input.HTMLEscape()
-		if got != tt.expected {
-			t.Errorf("SafeString(%q).HTMLEscape() = %q, want %q", string(tt.input), got, tt.expected)
-		}
-		// Also test String() method
-		got2 := tt.input.String()
-		if got2 != tt.expected {
-			t.Errorf("SafeString(%q).String() = %q, want %q", string(tt.input), got2, tt.expected)
-		}
-	}
-}
-
 func TestDeduplicate_NoPrograms(t *testing.T) {
 	result := Deduplicate(nil)
 	if len(result) != 0 {

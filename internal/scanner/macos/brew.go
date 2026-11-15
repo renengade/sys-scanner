@@ -54,6 +54,8 @@ func scanHomebrew() ([]types.Program, error) {
 // into programs. Each line has the format "name version" or "name v1 v2 ..."
 // (multiple installed versions). We take the last version token.
 func runBrewList(ctx context.Context, brewPath, kind string) ([]types.Program, error) {
+	// #nosec G204 -- brewPath comes from exec.LookPath("brew") and the
+	// arguments are fixed strings.
 	cmd := exec.CommandContext(ctx, brewPath, "list", kind, "--versions")
 	out, err := cmd.Output()
 	if err != nil {

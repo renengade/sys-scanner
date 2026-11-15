@@ -57,7 +57,7 @@ func samplePrograms() []types.Program {
 // Conversion tests
 // ---------------------------------------------------------------------------
 
-func TestNewProgramView_EscapesHTML(t *testing.T) {
+func TestNewProgramView_PreservesFields(t *testing.T) {
 	p := types.Program{
 		Name:      `<script>alert("xss")</script>`,
 		Version:   `1.0<>&"'`,
@@ -69,10 +69,10 @@ func TestNewProgramView_EscapesHTML(t *testing.T) {
 	cases := []struct {
 		name, got, want string
 	}{
-		{"Name", string(v.Name), `&lt;script&gt;alert(&#34;xss&#34;)&lt;/script&gt;`},
-		{"Version", string(v.Version), `1.0&lt;&gt;&amp;&#34;&#39;`},
-		{"Publisher", string(v.Publisher), `Acme &amp; Co.`},
-		{"Source", string(v.Source), `registry`},
+		{"Name", v.Name, `<script>alert("xss")</script>`},
+		{"Version", v.Version, `1.0<>&"'`},
+		{"Publisher", v.Publisher, `Acme & Co.`},
+		{"Source", v.Source, `registry`},
 	}
 	for _, c := range cases {
 		if c.got != c.want {
@@ -92,8 +92,8 @@ func TestNewProgramView_PreservesUnicode(t *testing.T) {
 		Source:    "registry",
 	}
 	v := NewProgramView(p)
-	if string(v.Name) != "微信 (WeChat)" {
-		t.Errorf("Unicode not preserved: got %q", string(v.Name))
+	if v.Name != "微信 (WeChat)" {
+		t.Errorf("Unicode not preserved: got %q", v.Name)
 	}
 }
 

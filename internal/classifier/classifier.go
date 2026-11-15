@@ -519,13 +519,24 @@ func processLineMatches(line, name string) bool {
 }
 
 // enumerateProcesses returns the process list as a single string.
+// windowsRoot returns the Windows installation directory. Used to build an
+// absolute path for tasklist.exe so subprocess launch cannot be hijacked by a
+// hostile PATH or current directory.
+func windowsRoot() string {
+	if root := os.Getenv("SystemRoot"); root != "" {
+		return root
+	}
+	return `C:\Windows`
+}
+
 func enumerateProcesses() (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), processTimeout)
 	defer cancel()
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.CommandContext(ctx, "tasklist")
+		// #nosec G204 -- absolute path under %SystemRoot%; no arguments.
+		cmd = exec.CommandContext(ctx, filepath.Join(windowsRoot(), "System32", "tasklist.exe"))
 	} else {
 		cmd = exec.CommandContext(ctx, "ps", "-eo", "comm=")
 	}
@@ -559,7 +570,7 @@ func hasPort(tool types.ToolSignature) bool {
 		addr := fmt.Sprintf("127.0.0.1:%d", port)
 		conn, err := dialPort("tcp", addr, portDialTimeout)
 		if err == nil {
-			conn.Close()
+			_ = conn.Close()
 			return true
 		}
 	}

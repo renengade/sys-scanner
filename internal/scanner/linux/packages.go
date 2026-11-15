@@ -21,6 +21,8 @@ var lookPath = exec.LookPath
 var execCommand = defaultExecCommand
 
 func defaultExecCommand(ctx context.Context, name string, args ...string) ([]byte, error) {
+	// #nosec G204 -- name is one of a fixed set of package-manager commands;
+	// it is never user-controlled.
 	cmd := exec.CommandContext(ctx, name, args...)
 	return cmd.Output()
 }
