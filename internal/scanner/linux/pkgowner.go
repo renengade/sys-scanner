@@ -68,7 +68,10 @@ func desktopExecPath(p types.Program) string {
 	if token == "" {
 		return ""
 	}
-	if filepath.IsAbs(token) {
+	// Treat any token containing a path separator as a filesystem path even
+	// when `filepath.IsAbs` says otherwise (Unix-style paths are not absolute
+	// by Windows rules, and this code only runs for Linux scans).
+	if filepath.IsAbs(token) || strings.ContainsRune(token, '/') {
 		return token
 	}
 	if resolved, err := lookPath(token); err == nil {
