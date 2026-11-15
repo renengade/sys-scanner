@@ -278,6 +278,10 @@ func binaryMatches(prog types.Program, tool types.ToolSignature, pathCache map[s
 func pathEndsWith(p, name string) bool {
 	base := filepath.Base(p)
 	if runtime.GOOS == "windows" {
+		// Windows install locations normally end in .exe while signature
+		// binary names do not include the extension.
+		base = strings.TrimSuffix(base, filepath.Ext(base))
+		name = strings.TrimSuffix(name, filepath.Ext(name))
 		return strings.EqualFold(base, name)
 	}
 	return base == name
@@ -320,7 +324,40 @@ func expandUserPath(p, homeDir string) string {
 			p = filepath.Join(homeDir, p[2:])
 		}
 	}
-	return os.ExpandEnv(p)
+	p = os.ExpandEnv(p)
+	return expandPercentVars(p)
+}
+
+// expandPercentVars expands Windows-style %NAME% references. os.ExpandEnv
+// only understands $NAME/${NAME}, so %APPDATA% would otherwise stay literal
+// and Windows config-dir detection would fail.
+func expandPercentVars(s string) string {
+	if !strings.Contains(s, "%") {
+		return s
+	}
+	var b strings.Builder
+	for {
+		start := strings.IndexByte(s, '%')
+		if start < 0 {
+			b.WriteString(s)
+			break
+		}
+		b.WriteString(s[:start])
+		rest := s[start+1:]
+		end := strings.IndexByte(rest, '%')
+		if end < 0 {
+			b.WriteString(s[start:])
+			break
+		}
+		name := rest[:end]
+		if name == "" {
+			b.WriteString("%%")
+		} else {
+			b.WriteString(os.Getenv(name))
+		}
+		s = rest[end+1:]
+	}
+	return b.String()
 }
 
 // claudeCodeActuallyInstalled applies stricter validation for Claude Code.

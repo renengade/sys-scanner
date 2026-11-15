@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -432,6 +433,9 @@ func TestScanOptDir_NonExistent(t *testing.T) {
 // --- PATH scanner allowlist tests ---
 
 func TestScanPATHDirs_AllowlistFiltersNonPrograms(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("tests the Linux executable-bit behavior")
+	}
 	dir := t.TempDir()
 	for _, name := range []string{
 		"git",         // in allowlist

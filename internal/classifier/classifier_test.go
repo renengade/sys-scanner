@@ -42,6 +42,29 @@ func writeFile(t *testing.T, base string, parts ...string) string {
 	return p
 }
 
+// createConfigDir creates the first config directory for a tool on the
+// current OS and returns its expanded path. Returns "" when the signature has
+// no config dir for this OS.
+func createConfigDir(t *testing.T, home, toolName string) string {
+	t.Helper()
+	sig, ok := signatures.Lookup(toolName)
+	if !ok {
+		t.Fatalf("tool %q not found", toolName)
+	}
+	dirs, ok := sig.ConfigDirs[runtime.GOOS]
+	if !ok || len(dirs) == 0 {
+		return ""
+	}
+	if runtime.GOOS == "windows" {
+		t.Setenv("APPDATA", home)
+	}
+	expanded := expandUserPath(dirs[0], home)
+	if err := os.MkdirAll(expanded, 0o755); err != nil {
+		t.Fatalf("mkdir %s: %v", expanded, err)
+	}
+	return expanded
+}
+
 // stubLookPath replaces the package-level lookPath function with a stub that
 // returns an error, so PATH lookups never accidentally pass tests. Returns a
 // restore function the caller should defer.
@@ -183,7 +206,9 @@ func TestBinaryMatch_PathCacheRequiresNameMatch(t *testing.T) {
 
 func TestConfigDirMatch_HomeExpansion(t *testing.T) {
 	home := t.TempDir()
-	mkdir(t, home, ".config", "opencode")
+	if createConfigDir(t, home, "opencode") == "" {
+		t.Skip("opencode has no config dir for this OS")
+	}
 
 	sig, _ := signatures.Lookup("opencode")
 	if !hasConfigDir(sig, home) {
@@ -253,13 +278,16 @@ func TestConfigDirMatch_WindowsEnvExpansion(t *testing.T) {
 
 func TestExpandUserPath_Variants(t *testing.T) {
 	home := "/home/testuser"
+	if runtime.GOOS == "windows" {
+		home = `C:\Users\testuser`
+	}
 
 	tests := []struct {
 		input    string
 		expected string
 	}{
-		{"~", "/home/testuser"},
-		{"~/.config/opencode", "/home/testuser/.config/opencode"},
+		{"~", home},
+		{"~/.config/opencode", filepath.Join(home, ".config", "opencode")},
 		{"/absolute/path", "/absolute/path"},
 		{"relative/path", "relative/path"},
 	}
@@ -271,6 +299,15 @@ func TestExpandUserPath_Variants(t *testing.T) {
 				t.Errorf("expandUserPath(%q, %q) = %q, want %q", tt.input, home, result, tt.expected)
 			}
 		})
+	}
+}
+
+func TestExpandUserPath_PercentVars(t *testing.T) {
+	t.Setenv("APPDATA", `C:\Users\testuser\AppData\Roaming`)
+	got := expandUserPath(`%APPDATA%\opencode`, `C:\Users\testuser`)
+	want := `C:\Users\testuser\AppData\Roaming\opencode`
+	if got != want {
+		t.Errorf("expandUserPath percent vars = %q, want %q", got, want)
 	}
 }
 
@@ -474,7 +511,9 @@ func TestClassifyOne_BinaryOnly(t *testing.T) {
 func TestClassifyOne_BinaryAndConfig(t *testing.T) {
 	defer stubLookPath()()
 	home := t.TempDir()
-	mkdir(t, home, ".config", "opencode")
+	if createConfigDir(t, home, "opencode") == "" {
+		t.Skip("opencode has no config dir for this OS")
+	}
 
 	prog := types.Program{
 		Name:            "OpenCode",
@@ -632,7 +671,9 @@ func TestClassify_MultiplePrograms(t *testing.T) {
 	defer stubProcesses()()
 	defer stubPorts()()
 	home := t.TempDir()
-	mkdir(t, home, ".config", "opencode")
+	if createConfigDir(t, home, "opencode") == "" {
+		t.Skip("opencode has no config dir for this OS")
+	}
 
 	programs := []types.Program{
 		{Name: "OpenCode Pkg", InstallLocation: "/usr/bin/opencode"},
@@ -902,58 +943,31 @@ func TestAllTools_BinaryDetection(t *testing.T) {
 
 func TestAllTools_ConfigDirDetection(t *testing.T) {
 	home := t.TempDir()
-
-	type configTest struct {
-		toolName string
-		dirs     []string // relative to home
-		files    []string // relative to home (strict tools that require files)
-	}
-	tests := []configTest{
-		{"opencode", []string{".config/opencode"}, nil},
-		{"codex-cli", []string{".codex"}, nil},
-		{"claude-code", nil, []string{".claude.json"}},
-		{"cursor", []string{".cursor"}, nil},
-		{"windsurf", []string{".codeium/windsurf"}, nil},
-		{"aider", []string{".aider"}, nil},
-		{"cline", []string{".cline"}, nil},
-		{"roo-code", []string{".roo"}, nil},
-		{"continue", []string{".continue"}, nil},
-		{"tabnine", []string{".tabnine"}, nil},
-		{"amazon-q", []string{".aws/amazonq"}, nil},
-		{"codeium", []string{".codeium"}, nil},
-		{"augment-code", []string{".augment"}, nil},
-		{"hermes", []string{".hermes"}, nil},
-		{"zed-ai", []string{".config/zed"}, nil},
-		{"pearai", []string{".config/pear"}, nil},
-		{"trae", []string{".trae"}, nil},
-		{"ollama", []string{".ollama"}, nil},
-		{"lm-studio", []string{".lmstudio"}, nil},
-		{"gpt4all", []string{".config/nomic.ai"}, nil},
-		{"localai", []string{".config/localai"}, nil},
+	toolNames := []string{
+		"opencode", "codex-cli", "claude-code", "cursor", "windsurf", "aider",
+		"cline", "roo-code", "continue", "tabnine", "amazon-q", "codeium",
+		"augment-code", "hermes", "zed-ai", "pearai", "trae", "ollama",
+		"lm-studio", "gpt4all", "localai",
 	}
 
-	for _, ct := range tests {
-		t.Run(ct.toolName, func(t *testing.T) {
-			// Create one of the config dirs (usually the first).
-			if len(ct.dirs) > 0 {
-				mkdir(t, home, strings.Split(ct.dirs[0], "/")...)
-			}
-			if len(ct.files) > 0 {
-				writeFile(t, home, strings.Split(ct.files[0], "/")...)
-			}
-
-			sig, ok := signatures.Lookup(ct.toolName)
+	for _, toolName := range toolNames {
+		t.Run(toolName, func(t *testing.T) {
+			sig, ok := signatures.Lookup(toolName)
 			if !ok {
-				t.Fatalf("tool %q not found", ct.toolName)
+				t.Fatalf("tool %q not found", toolName)
 			}
-			if ct.toolName == "claude-code" {
+			if toolName == "claude-code" {
+				writeFile(t, home, ".claude.json")
 				if !claudeCodeActuallyInstalled(home) {
-					t.Errorf("claude-code: claudeCodeActuallyInstalled = false, want true; created %s", ct.files[0])
+					t.Error("claude-code: claudeCodeActuallyInstalled = false, want true")
 				}
 				return
 			}
+			if createConfigDir(t, home, toolName) == "" {
+				t.Skipf("%s has no config dir for %s", toolName, runtime.GOOS)
+			}
 			if !hasConfigDir(sig, home) {
-				t.Errorf("%s: hasConfigDir = false, want true; created %s", ct.toolName, ct.dirs[0])
+				t.Errorf("%s: hasConfigDir = false, want true", toolName)
 			}
 		})
 	}

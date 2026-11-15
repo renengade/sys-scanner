@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -92,6 +93,9 @@ func TestCSV_FormulaInjectionIsNeutralized(t *testing.T) {
 }
 
 func TestWriteFile_JSON(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX permission bits are not meaningful on Windows")
+	}
 	path := filepath.Join(t.TempDir(), "nested", "inventory.json")
 	got, err := WriteFile("json", path, sampleInventory(), &bytes.Buffer{})
 	if err != nil {
