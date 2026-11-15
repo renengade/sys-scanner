@@ -333,6 +333,9 @@ tbody tr[hidden] { display: none; }
   padding: 2px var(--space-3);
   border-radius: 999px;
   letter-spacing: 0.3px;
+  /* Keep source labels on one line ("apppaths", "registry") instead of
+     wrapping inside the pill when the column gets narrow. */
+  white-space: nowrap;
 }
 
 tbody tr.ai-row .source-tag {

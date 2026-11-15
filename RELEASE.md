@@ -1,5 +1,13 @@
 # Release Notes — sys-scanner
 
+## 1.3.1
+
+### Fixes
+
+- HTML report: the Source column no longer wraps labels like `apppaths` /
+  `registry` onto two lines; the pill now stays on one line and the column
+  widens to fit.
+
 ## 1.3.0
 
 ### Features
