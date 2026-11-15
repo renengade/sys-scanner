@@ -28,6 +28,11 @@ type ProgramView struct {
 	InstallLocation string
 	AIToolName      string
 	IsAITool        bool
+	// ShowAIToolBadge is true only when the detected tool's signature ID is
+	// not already conveyed by the display name (e.g. registry name
+	// "Claude Code" vs signature "claude-code"). This avoids repeating the
+	// same information in a blue badge.
+	ShowAIToolBadge bool
 }
 
 // NewProgramView converts a types.Program to a ProgramView, HTML-escaping
@@ -41,7 +46,21 @@ func NewProgramView(p types.Program) ProgramView {
 		InstallLocation: p.InstallLocation,
 		AIToolName:      p.AIToolName,
 		IsAITool:        p.IsAITool,
+		ShowAIToolBadge: showAIToolBadge(p.Name, p.AIToolName),
 	}
+}
+
+// showAIToolBadge decides whether the blue signature-ID badge is rendered:
+// it is redundant when the display name already says the same thing after
+// case/separator normalization ("Claude Code" ≈ "claude-code").
+func showAIToolBadge(name, toolName string) bool {
+	norm := func(s string) string {
+		s = strings.ToLower(strings.TrimSpace(s))
+		return strings.NewReplacer("-", " ", "_", " ").Replace(s)
+	}
+	n := norm(name)
+	t := norm(toolName)
+	return t != "" && t != n
 }
 
 // ReportData is the top-level data model handed to the HTML template.

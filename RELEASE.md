@@ -1,5 +1,15 @@
 # Release Notes — sys-scanner
 
+## 1.3.2
+
+### Fixes
+
+- HTML report: the blue signature-ID badge under an AI tool's name is now
+  suppressed when the display name already says the same thing
+  ("Claude Code" + badge "CLAUDE-CODE"); it still appears when the program
+  name differs from the detected tool ID (e.g. "MyOpenCode" detected as
+  opencode).
+
 ## 1.3.1
 
 ### Fixes

@@ -536,7 +536,7 @@ footer code {
         <tr{{if .IsAITool}} class="ai-row"{{end}}>
           <td class="name-cell">
             {{.Name}}
-            {{if and .IsAITool .AIToolName}}<span class="badge">{{.AIToolName}}</span>{{end}}
+            {{if .ShowAIToolBadge}}<span class="badge">{{.AIToolName}}</span>{{end}}
           </td>
           <td>{{.Version}}</td>
           <td>{{.Publisher}}</td>

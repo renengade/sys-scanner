@@ -146,7 +146,7 @@ Schema-versioned (`schema_version: "1.1"`), suitable for a central collector:
 ```json
 {
   "schema_version": "1.1",
-  "scanner_version": "1.3.1",
+  "scanner_version": "1.3.2",
   "generated_at": "2026-11-15T08:00:00Z",
   "generated_at_local": "2026-11-15 16:00:00 CST",
   "host": {

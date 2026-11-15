@@ -216,9 +216,9 @@ func TestRender_EmptyPrograms_ShowsEmptyState(t *testing.T) {
 
 func TestRender_AllAITools_AllRowsAreAIRows(t *testing.T) {
 	progs := []types.Program{
-		{Name: "Cursor", IsAITool: true, AIToolName: "Cursor"},
-		{Name: "OpenCode", IsAITool: true, AIToolName: "OpenCode"},
-		{Name: "Ollama", IsAITool: true, AIToolName: "Ollama"},
+		{Name: "Cursor", IsAITool: true, AIToolName: "cursor"},
+		{Name: "MyOpenCode", IsAITool: true, AIToolName: "opencode"},
+		{Name: "Ollama", IsAITool: true, AIToolName: "ollama"},
 	}
 	data := NewReportData("macOS", progs).WithScanTime(fixedScanTime())
 	if data.AICount != 3 {
@@ -230,14 +230,19 @@ func TestRender_AllAITools_AllRowsAreAIRows(t *testing.T) {
 	}
 	s := string(out)
 
-	for _, name := range []string{"Cursor", "OpenCode", "Ollama"} {
-		if !strings.Contains(s, `class="ai-row"`) {
-			t.Fatal("no ai-row class emitted")
-		}
-		// The badge should appear in each row.
-		if !strings.Contains(s, `<span class="badge">`+name) {
-			t.Errorf("badge for %s missing", name)
-		}
+	// The badge is suppressed when the display name already matches the
+	// signature ID ("Cursor" ≈ "cursor"), and shown when they differ
+	// ("MyOpenCode" vs "opencode").
+	if !strings.Contains(s, `<span class="badge">opencode</span>`) {
+		t.Error("badge should be shown for MyOpenCode/opencode")
+	}
+	if strings.Contains(s, `class="badge"`) && !strings.Contains(s, `<span class="badge">opencode</span>`) {
+		t.Error("only MyOpenCode row should carry a badge")
+	}
+	if strings.Contains(s, `<span class="badge">cursor</span>`) {
+		t.Error("badge should be suppressed when name matches signature")
+	}
+	for _, name := range []string{"Cursor", "MyOpenCode", "Ollama"} {
 		if !strings.Contains(s, name) {
 			t.Errorf("program %s missing", name)
 		}
@@ -453,5 +458,24 @@ func TestOpen_TimesOutCleanly(t *testing.T) {
 	case <-done:
 	case <-ctx.Done():
 		t.Fatal("Open blocked beyond 10s — timeout guard is broken")
+	}
+}
+
+func TestShowAIToolBadge(t *testing.T) {
+	tests := []struct {
+		name, tool string
+		want       bool
+	}{
+		{"Claude Code", "claude-code", false},
+		{"GitHub Copilot", "github-copilot", false},
+		{"OpenCode", "opencode", false},
+		{"MyOpenCode", "opencode", true},
+		{"Claude Code", "", false},
+		{"Some vendor build", "claude-code", true},
+	}
+	for _, tt := range tests {
+		if got := showAIToolBadge(tt.name, tt.tool); got != tt.want {
+			t.Errorf("showAIToolBadge(%q, %q) = %v, want %v", tt.name, tt.tool, got, tt.want)
+		}
 	}
 }
