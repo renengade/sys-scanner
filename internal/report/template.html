@@ -342,6 +342,13 @@ tbody tr.ai-row .source-tag {
 
 .name-cell { font-weight: 600; }
 
+.location-cell {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
 /* --- Empty State --- */
 .empty-state {
   padding: var(--space-6) var(--space-4);
@@ -501,7 +508,7 @@ footer code {
       type="search"
       class="search-input"
       id="search"
-      placeholder="Search by name or publisher…"
+      placeholder="Search by name, publisher or path…"
       aria-label="Search programs"
       autocomplete="off"
       spellcheck="false">
@@ -518,6 +525,7 @@ footer code {
           <th data-sort="version" scope="col">Version <span class="sort-indicator"></span></th>
           <th data-sort="publisher" scope="col">Publisher <span class="sort-indicator"></span></th>
           <th data-sort="source" scope="col">Source <span class="sort-indicator"></span></th>
+          <th data-sort="location" scope="col">Install Location <span class="sort-indicator"></span></th>
         </tr>
       </thead>
       <tbody id="programs-body">
@@ -530,6 +538,7 @@ footer code {
           <td>{{.Version}}</td>
           <td>{{.Publisher}}</td>
           <td><span class="source-tag">{{.Source}}</span></td>
+          <td class="location-cell">{{.InstallLocation}}</td>
         </tr>
         {{end}}
       </tbody>
@@ -575,7 +584,7 @@ footer code {
 
   var currentTab = 'all';
   var currentSort = { column: null, direction: 0 }; // 0=none, 1=asc, -1=desc
-  var COL_INDEX = { name: 0, version: 1, publisher: 2, source: 3 };
+  var COL_INDEX = { name: 0, version: 1, publisher: 2, source: 3, location: 4 };
 
   // ----- Tab switching -----
   for (var t = 0; t < tabs.length; t++) {
@@ -621,7 +630,7 @@ footer code {
       var row = rows[i];
       var isAI = row.classList.contains('ai-row');
       var tabMatch = (currentTab === 'all') || (currentTab === 'ai' && isAI);
-      var searchMatch = rowMatchesQuery(row, [COL_INDEX.name, COL_INDEX.publisher], query);
+      var searchMatch = rowMatchesQuery(row, [COL_INDEX.name, COL_INDEX.publisher, COL_INDEX.location], query);
       row.hidden = !(tabMatch && searchMatch);
     }
     emptyState.hidden = rows.length > 0;

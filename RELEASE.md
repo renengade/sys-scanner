@@ -1,5 +1,24 @@
 # Release Notes — sys-scanner
 
+## 1.3.0
+
+### Features
+
+- HTML report now includes the full install location for every program.
+- Version and publisher enrichment:
+  - Windows reads the PE version resource (`FileVersion`, `ProductName`,
+    `CompanyName`) of the program executable when registry/App Paths/PATH
+    data is missing.
+  - Linux `.desktop` entries are enriched from the owning package
+    (dpkg/rpm/pacman) for version and maintainer/vendor.
+- XLSX summary diff now distinguishes updates: `+N added, -N removed,
+  ~N updated`; version bumps count as updates.
+- Unchanged runs no longer rewrite the XLSX summary (mtime and the stored
+  `scan_time` are preserved, so it marks the last content change).
+- Note for maintainers: `VerQueryValue` reports string-block lengths in
+  characters, not bytes; the version enrichment walks to the NUL terminator
+  instead of slicing by `length/2` (which truncated publisher names).
+
 ## 1.2.2
 
 ### Code audit
@@ -56,8 +75,6 @@
 
 ## What is new in 1.2.0
 
-- Removed script/automation scanning. Reports, JSON, CSV, and the summary
-  workbook now contain software entries only.
 - Summary workbook is a real `.xlsx` written next to the HTML report:
   `<output dir>/sys-scanner-summary.xlsx`.
 - Summary times are human-readable local time, e.g.

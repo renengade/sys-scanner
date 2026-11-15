@@ -117,7 +117,7 @@ By default everything is written next to the executable, under `sys-scanner/`:
 
 #### HTML report
 
-- Program table with name, version, publisher, and source.
+- Program table with name, version, publisher, source, and full install location.
 - AI-tool highlighting and an AI-only tab.
 - Host, IP, MAC, platform, scan time, and duration in the header.
 - Search and sorting, fully self-contained.
@@ -133,8 +133,9 @@ A cumulative workbook written next to the HTML report:
 - One row per program.
 - Columns: machine ID, hostname, OS, architecture, IPs, MACs, scan time, scanner version, name, version, publisher, location, source, AI flags.
 - `scan_time` is human-readable local time, e.g. `2026-11-15 18:00:00 CST`.
-- Re-running on the same machine replaces that machine's rows and reports `+N added / -N removed`.
+- Re-running on the same machine replaces that machine's rows and reports `+N added / -N removed / ~N updated`.
 - Software version changes are updates, not add/remove.
+- Unchanged runs leave the workbook untouched (no rewrite).
 - Other machines accumulate in the same workbook.
 - Corrupt or incompatible workbooks are moved to `.bak` and rebuilt.
 
@@ -145,7 +146,7 @@ Schema-versioned (`schema_version: "1.1"`), suitable for a central collector:
 ```json
 {
   "schema_version": "1.1",
-  "scanner_version": "1.2.2",
+  "scanner_version": "1.3.0",
   "generated_at": "2026-11-15T08:00:00Z",
   "generated_at_local": "2026-11-15 16:00:00 CST",
   "host": {

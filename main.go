@@ -24,7 +24,7 @@ import (
 
 // version is stamped into the JSON inventory and printed by -version.
 // It can be overridden at build time with -ldflags "-X main.version=...".
-var version = "1.2.2"
+var version = "1.3.0"
 
 // contextDetector is an optional extension of the platform detector that can
 // honour a deadline and return partial results instead of being abandoned.
@@ -181,8 +181,15 @@ func updateSummary(out, primaryDest string, programs []types.Program, duration t
 		fmt.Fprintf(os.Stderr, "Warning: summary update failed: %v\n", err)
 		return
 	}
-	fmt.Fprintf(os.Stderr, "Summary updated: %s (%d rows; +%d added, -%d removed)\n",
-		path, res.Rows, res.Added, res.Removed)
+	if !res.Changed {
+		fmt.Fprintf(os.Stderr, "Summary unchanged: %s (%d rows)\n", path, res.Rows)
+	} else if res.Updated > 0 {
+		fmt.Fprintf(os.Stderr, "Summary updated: %s (%d rows; +%d added, -%d removed, ~%d updated)\n",
+			path, res.Rows, res.Added, res.Removed, res.Updated)
+	} else {
+		fmt.Fprintf(os.Stderr, "Summary updated: %s (%d rows; +%d added, -%d removed)\n",
+			path, res.Rows, res.Added, res.Removed)
+	}
 }
 
 // resolveSummaryPath places the default summary beside the primary output so

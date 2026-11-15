@@ -82,7 +82,11 @@ func (s *LinuxScanner) DetectContext(ctx context.Context) ([]types.Program, erro
 	s.recordSource("PATH", pathPrograms, len(pathPrograms) == 0)
 	allPrograms = append(allPrograms, pathPrograms...)
 
-	// 5. Deduplicate.
+	// 5. Enrich .desktop entries with the owning package's version and
+	// maintainer — .desktop files do not carry this metadata themselves.
+	allPrograms = enrichDesktopPrograms(allPrograms)
+
+	// 6. Deduplicate.
 	if err := ctx.Err(); err != nil {
 		return finish(err)
 	}

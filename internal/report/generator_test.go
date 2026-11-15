@@ -162,11 +162,11 @@ func TestRender_BasicStructure(t *testing.T) {
 		"All Programs",
 		"AI Tools Only",
 		// search input
-		"Search by name or publisher",
+		"Search by name, publisher or path",
 		// columns
-		"Name", "Version", "Publisher", "Source",
+		"Name", "Version", "Publisher", "Source", "Install Location",
 		// data
-		"Firefox", "Mozilla Foundation",
+		"Firefox", "Mozilla Foundation", "/usr/bin/git",
 		"Cursor", "OpenCode",
 	} {
 		if !strings.Contains(s, want) {

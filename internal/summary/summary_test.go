@@ -176,3 +176,91 @@ func TestUpdate_VersionChangeIsNotAddRemove(t *testing.T) {
 		t.Errorf("version = %q, want 122", rows[1][9])
 	}
 }
+
+func TestUpdate_NoChangeSkipsWrite(t *testing.T) {
+	path := filepath.Join(t.TempDir(), DefaultFilename)
+	inv := testInventory("ws-01", "windows", "aa:bb:cc:dd:ee:ff",
+		[]types.Program{{Name: "Chrome", Version: "120", Source: "registry"}})
+	if _, err := Update(path, inv); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := os.Stat(path); err != nil {
+		t.Fatal(err)
+	}
+	oldTime := time.Now().Add(-time.Hour)
+	if err := os.Chtimes(path, oldTime, oldTime); err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := Update(path, inv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Changed {
+		t.Errorf("unchanged rerun should not mark Changed: %+v", res)
+	}
+	if res.Rows != 1 || res.Added != 0 || res.Removed != 0 || res.Updated != 0 {
+		t.Errorf("unchanged rerun result = %+v", res)
+	}
+	info2, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !info2.ModTime().Equal(oldTime) {
+		t.Errorf("workbook was rewritten on unchanged run: %v -> %v", oldTime, info2.ModTime())
+	}
+}
+
+func TestUpdate_VersionBumpIsUpdateNotAddRemove(t *testing.T) {
+	path := filepath.Join(t.TempDir(), DefaultFilename)
+	first := testInventory("ws-01", "windows", "aa:bb:cc:dd:ee:ff",
+		[]types.Program{{Name: "Chrome", Version: "120", Source: "registry"}})
+	if _, err := Update(path, first); err != nil {
+		t.Fatal(err)
+	}
+	second := testInventory("ws-01", "windows", "aa:bb:cc:dd:ee:ff",
+		[]types.Program{{Name: "Chrome", Version: "121", Source: "registry"}})
+	res, err := Update(path, second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !res.Changed || res.Added != 0 || res.Removed != 0 || res.Updated != 1 {
+		t.Errorf("version bump result = %+v, want changed with 1 updated", res)
+	}
+}
+
+func TestUpdate_NewScanTimeButSameSoftwareIsUnchanged(t *testing.T) {
+	path := filepath.Join(t.TempDir(), DefaultFilename)
+	first := testInventory("ws-01", "windows", "aa:bb:cc:dd:ee:ff",
+		[]types.Program{{Name: "Chrome", Version: "120", Source: "registry"}})
+	if _, err := Update(path, first); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(path); err != nil {
+		t.Fatal(err)
+	}
+	oldTime := time.Now().Add(-time.Hour)
+	if err := os.Chtimes(path, oldTime, oldTime); err != nil {
+		t.Fatal(err)
+	}
+
+	// A later run with the same software list must not rewrite the file.
+	second := testInventory("ws-01", "windows", "aa:bb:cc:dd:ee:ff",
+		[]types.Program{{Name: "Chrome", Version: "120", Source: "registry"}})
+	second.GeneratedAt = first.GeneratedAt.Add(time.Hour)
+	res, err := Update(path, second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Changed || res.Rows != 1 {
+		t.Errorf("same-software rerun = %+v, want unchanged", res)
+	}
+	info2, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !info2.ModTime().Equal(oldTime) {
+		t.Errorf("workbook rewritten on same-software rerun: %v -> %v", oldTime, info2.ModTime())
+	}
+}

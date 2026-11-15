@@ -17,6 +17,7 @@ const (
 	valDisplayVersion  = "DisplayVersion"
 	valPublisher       = "Publisher"
 	valInstallLocation = "InstallLocation"
+	valDisplayIcon     = "DisplayIcon"
 	valInstallDate     = "InstallDate"
 	valSystemComponent = "SystemComponent"
 	valNoRemove        = "NoRemove"
@@ -272,12 +273,15 @@ func parseRegistryEntry(values map[string]string, source string) (types.Program,
 	if v := values[valInstallDate]; v != "" {
 		meta["InstallDate"] = v
 	}
+	if v := values[valDisplayIcon]; v != "" {
+		meta["DisplayIcon"] = v
+	}
 
 	return types.Program{
 		Name:            name,
 		Version:         strings.TrimSpace(values[valDisplayVersion]),
 		Publisher:       strings.TrimSpace(values[valPublisher]),
-		InstallLocation: strings.TrimSpace(values[valInstallLocation]),
+		InstallLocation: strings.Trim(strings.TrimSpace(values[valInstallLocation]), `"`),
 		Source:          source,
 		RawMetadata:     meta,
 	}, true

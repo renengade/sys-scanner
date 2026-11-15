@@ -43,9 +43,11 @@ var Header = []string{
 
 // Result describes one summary update.
 type Result struct {
-	Rows    int // total data rows in the workbook
-	Added   int // items present now but not in the previous run for this machine
-	Removed int // items present in the previous run but not now
+	Rows    int  // total data rows in the workbook
+	Added   int  // items present now but not in the previous run for this machine
+	Removed int  // items present in the previous run but not now
+	Updated int  // same items whose row content changed (e.g. version bump)
+	Changed bool // false when the workbook was left untouched
 }
 
 // MachineID returns the stable key used to replace a machine's rows on the
@@ -73,14 +75,16 @@ func Update(path string, inv types.Inventory) (Result, error) {
 
 	machineID := MachineID(inv.Host)
 	var (
-		kept    [][]string
-		oldKeys = make(map[string]struct{})
+		kept       [][]string
+		oldMachine [][]string
+		oldKeys    = make(map[string]struct{})
 	)
 	for _, row := range rows {
 		if len(row) != len(Header) {
 			continue
 		}
 		if row[0] == machineID {
+			oldMachine = append(oldMachine, row)
 			oldKeys[rowKey(row)] = struct{}{}
 			continue
 		}
@@ -93,10 +97,22 @@ func Update(path string, inv types.Inventory) (Result, error) {
 		newKeys[rowKey(row)] = struct{}{}
 	}
 
+	// Nothing new, nothing removed, and identical rows for this machine:
+	// leave the workbook untouched so repeated runs do not churn the file.
+	// scan_time and scanner_version are excluded from the comparison — a
+	// rerun with identical software is not a change worth rewriting the file
+	// for. The stored scan_time therefore marks when this machine's rows
+	// were last actually changed.
+	if len(oldMachine) == len(newRows) && equalRows(oldMachine, newRows) {
+		return Result{Rows: len(rows), Changed: false}, nil
+	}
+
 	result := Result{
 		Rows:    len(kept) + len(newRows),
 		Added:   countMissing(newKeys, oldKeys),
 		Removed: countMissing(oldKeys, newKeys),
+		Updated: countUpdated(oldMachine, newRows),
+		Changed: true,
 	}
 
 	merged := append(kept, newRows...)
@@ -121,6 +137,54 @@ func countMissing(a, b map[string]struct{}) int {
 		}
 	}
 	return n
+}
+
+// contentOnlyCols are columns excluded from "did anything change"
+// comparisons: scan_time and scanner_version change on every run but do not
+// represent a change in the machine's software.
+var contentOnlyCols = map[int]bool{6: true, 7: true}
+
+func equalRows(a, b [][]string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if !equalStringSlices(a[i], b[i], contentOnlyCols) {
+			return false
+		}
+	}
+	return true
+}
+
+func equalStringSlices(a, b []string, ignore map[int]bool) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if ignore[i] {
+			continue
+		}
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// countUpdated counts rows whose identity (name+location) is unchanged but
+// whose content differs — typically a version bump or publisher rename.
+func countUpdated(old, new [][]string) int {
+	oldByKey := make(map[string][]string, len(old))
+	for _, row := range old {
+		oldByKey[rowKey(row)] = row
+	}
+	updated := 0
+	for _, row := range new {
+		if oldRow, ok := oldByKey[rowKey(row)]; ok && !equalStringSlices(oldRow, row, contentOnlyCols) {
+			updated++
+		}
+	}
+	return updated
 }
 
 func rowKey(row []string) string {

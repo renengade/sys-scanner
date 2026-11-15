@@ -19,7 +19,7 @@ sys-scanner -format json -out ./inventory.json -no-open
 ```json
 {
   "schema_version": "1.1",
-  "scanner_version": "1.2.2",
+  "scanner_version": "1.3.0",
   "generated_at": "2026-11-15T05:00:00Z",
   "generated_at_local": "2026-11-15 13:00:00 CST",
   "host": {
@@ -114,9 +114,10 @@ sys-scanner -format json -out ./inventory.json -no-open
 
 - 真正的 `.xlsx` 文件，Excel/WPS 可直接打开，无需另存。
 - 每个软件一行，带 `machine_id`、主机名、IP、MAC、系统、扫描时间、采集器版本。
-- `scan_time` 使用本地可读格式，例如 `2026-11-15 18:00:00 CST`。
+- `scan_time` 使用本地可读格式，例如 `2026-11-15 18:00:00 CST`；它表示该机器记录**最后一次内容变化**的时间——内容没有变化的重复运行不会刷新这个时间，也不会重写文件。
 - 同一台机器重复运行时，会按 `machine_id` 替换该机器的旧记录，并统计本次新增/删除数量。
-- 软件版本变化不算新增/删除，只更新版本号。
+- 软件版本变化不算新增/删除，只更新版本号（算作 updated）。
+- 与上次内容完全一致时，不会重写文件（修改时间保持不变）。
 - 不同机器（包括同一台机器的 Windows 与 WSL）会分别记录。
 - 删除该文件即可重新开始汇总。
 - 多台机器同时写同一个共享文件时可能互相覆盖；建议顺序执行，或每台机器写本地文件后统一合并。
@@ -129,7 +130,7 @@ sys-scanner -format json -out ./inventory.json -no-open
 | `machine_id` | `主机名|系统|首个MAC`，用于替换同一台机器的旧记录 |
 | `hostname` / `os` / `arch` | 主机信息 |
 | `ip_addresses` / `mac_addresses` | 多个地址用 `; ` 分隔 |
-| `scan_time` / `scanner_version` | 本次扫描的本地时间与采集器版本 |
+| `scan_time` / `scanner_version` | 该机器记录最后一次内容变化的本地时间；内容未变化时不刷新 |
 | `name` / `version` / `publisher` | 软件信息 |
 | `location` / `source` | 安装位置、来源 |
 | `is_ai_tool` / `ai_tool_name` | AI 工具标记 |
@@ -163,5 +164,4 @@ sys-scanner -format json -out - -no-open | jq '{
 ## 版本兼容
 
 - `schema_version` 在字段含义发生不兼容变化时递增。
-- 1.1 起移除了脚本清单字段（`scripts`、`scripts_by_source`、`script_count`）。
 - 新增可选字段不会改变主版本，采集端应忽略未知字段。

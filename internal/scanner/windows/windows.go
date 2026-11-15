@@ -97,6 +97,11 @@ func (s *WindowsScanner) DetectContext(ctx context.Context) ([]types.Program, er
 		all = append(all, results[i].programs...)
 	}
 
+	// Fill in missing Version/Publisher from the PE version resource of each
+	// program's executable before deduplication so the merged entry inherits
+	// the richer data.
+	all = enrichWithFileVersion(all)
+
 	slog.Info("Windows scan complete",
 		"duration", time.Since(start),
 		"total_raw", len(all),
