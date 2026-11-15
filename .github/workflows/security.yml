@@ -20,12 +20,12 @@ jobs:
         with:
           go-version: '1.26.x'
           cache: true
-      - name: Build gosec
-        run: go build -o "$(go env GOPATH)/bin/gosec" github.com/securego/gosec/v2/cmd/gosec@latest
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
       - name: gosec (linux/darwin)
         run: gosec -quiet ./...
       - name: gosec (windows)
-        run: GOOS=windows gosec -quiet ./...
+        run: GOOS=windows "$(go env GOPATH)/bin/gosec" -quiet ./...
       - name: go vet
         run: go vet ./...
 
