@@ -473,3 +473,12 @@ func TestIsBuiltinExecutableName(t *testing.T) {
 		})
 	}
 }
+
+func TestStripJSONBOM(t *testing.T) {
+	if got := stripJSONBOM("\ufeff[{\"Name\":\"x\"}]"); got != "[{\"Name\":\"x\"}]" {
+		t.Errorf("stripJSONBOM = %q", got)
+	}
+	if got := stripJSONBOM(`{"Name":"x"}`); got != `{"Name":"x"}` {
+		t.Errorf("stripJSONBOM changed non-BOM input: %q", got)
+	}
+}

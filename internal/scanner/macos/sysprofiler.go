@@ -15,15 +15,6 @@ import (
 
 const sysProfilerTimeout = 60 * time.Second
 
-// sysProfilerEntry represents a single application entry from
-// system_profiler SPApplicationsDataType -xml output.
-type sysProfilerEntry struct {
-	Name         string `plist:"_name"`
-	Version      string `plist:"version"`
-	Path         string `plist:"path"`
-	ObtainedFrom string `plist:"obtained_from"`
-}
-
 // scanSysProfiler runs system_profiler SPApplicationsDataType -xml and parses
 // the XML plist output into programs. Returns nil on timeout or error.
 func scanSysProfiler() ([]types.Program, error) {

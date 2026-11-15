@@ -19,7 +19,7 @@ sys-scanner -format json -out ./inventory.json -no-open
 ```json
 {
   "schema_version": "1.1",
-  "scanner_version": "1.2.1",
+  "scanner_version": "1.2.2",
   "generated_at": "2026-11-15T05:00:00Z",
   "generated_at_local": "2026-11-15 13:00:00 CST",
   "host": {

@@ -53,7 +53,7 @@ func parseDesktopFile(path string) (desktopEntry, bool) {
 	if err != nil {
 		return desktopEntry{}, false
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var entry desktopEntry
 	inDesktopSection := false

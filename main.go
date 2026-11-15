@@ -24,7 +24,7 @@ import (
 
 // version is stamped into the JSON inventory and printed by -version.
 // It can be overridden at build time with -ldflags "-X main.version=...".
-var version = "1.2.1"
+var version = "1.2.2"
 
 // contextDetector is an optional extension of the platform detector that can
 // honour a deadline and return partial results instead of being abandoned.
@@ -162,9 +162,21 @@ func run(args []string) int {
 // updateSummary merges this run into the cumulative machine summary. Failures
 // are reported but do not block the primary report/inventory output.
 func updateSummary(out, primaryDest string, programs []types.Program, duration time.Duration, host types.HostInfo) {
+	explicit := strings.TrimSpace(out) != ""
 	path := resolveSummaryPath(out, primaryDest)
 	inv := inventory.BuildWithHost(programs, duration, version, host)
 	res, err := summary.Update(path, inv)
+	if err != nil && !explicit {
+		// The default location lives next to the executable and may be
+		// read-only (for example an install under Program Files). Fall back
+		// to the user temp directory.
+		fallback := filepath.Join(os.TempDir(), "sys-scanner", summary.DefaultFilename)
+		if fallbackRes, fallbackErr := summary.Update(fallback, inv); fallbackErr == nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not write summary next to the executable (%v); saved to %s\n", err, fallback)
+			path, res = fallback, fallbackRes
+			err = nil
+		}
+	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: summary update failed: %v\n", err)
 		return

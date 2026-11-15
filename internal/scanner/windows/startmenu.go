@@ -31,19 +31,14 @@ const (
 	_                            // 6 GetDescription
 )
 
-const (
-	iShellLinkResolve = 19 // vtable index for IShellLink::Resolve
-)
-
 // IPersistFile vtable indices.
 const (
 	iPersistFileLoad = 5
 )
 
 var (
-	ole32    = syscall.NewLazyDLL("ole32.dll")
-	shell32  = syscall.NewLazyDLL("shell32.dll")
-	kernel32 = syscall.NewLazyDLL("kernel32.dll")
+	ole32   = syscall.NewLazyDLL("ole32.dll")
+	shell32 = syscall.NewLazyDLL("shell32.dll")
 
 	procCoInitializeEx       = ole32.NewProc("CoInitializeEx")
 	procCoUninitialize       = ole32.NewProc("CoUninitialize")

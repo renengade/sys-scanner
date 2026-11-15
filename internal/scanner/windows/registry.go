@@ -121,10 +121,3 @@ func readRegistryStringValues(k registry.Key) map[string]string {
 	}
 	return vals
 }
-
-// registrySourceName is the Source tag attached to every registry-sourced program.
-const registrySourceName = "registry"
-
-// Ensure scanRegistry result satisfies the types.Program slice contract at
-// compile time (no-op, just a sanity anchor).
-var _ []types.Program

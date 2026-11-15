@@ -33,7 +33,11 @@ func windowsPowerShellPath() string {
 }
 
 func getCmdAppxPackage() string {
-	return "Get-AppxPackage | Select-Object Name, Version, Publisher | ConvertTo-Json -Compress"
+	// Force UTF-8 console output: PowerShell redirects stdout in the legacy
+	// console code page by default, which would garble non-ASCII publisher
+	// names (e.g. Chinese OEMs) before Go parses the JSON.
+	return "[Console]::OutputEncoding=[System.Text.Encoding]::UTF8; " +
+		"Get-AppxPackage | Select-Object Name, Version, Publisher | ConvertTo-Json -Compress"
 }
 
 // scanStoreApps attempts to enumerate Microsoft Store (UWP / AppX) packages.
@@ -87,7 +91,7 @@ func scanStoreAppsPowerShell() ([]types.Program, error) {
 		return nil, fmt.Errorf("powershell Get-AppxPackage: %w: %s", err, stderr.String())
 	}
 
-	out := strings.TrimSpace(stdout.String())
+	out := stripJSONBOM(strings.TrimSpace(stdout.String()))
 	if out == "" || out == "null" {
 		return nil, nil
 	}

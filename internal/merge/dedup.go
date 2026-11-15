@@ -291,14 +291,23 @@ func Deduplicate(programs []types.Program) []types.Program {
 		}
 	}
 
-	// Sort: Name ascending (case-insensitive), then Version descending
+	// Sort: Name ascending (case-insensitive), Version descending, then
+	// Publisher and Source ascending. The last two tiebreakers keep the output
+	// deterministic even when the input arrives from concurrently scanned
+	// sources or from Go map iteration.
 	sort.SliceStable(result, func(i, j int) bool {
 		ni, nj := strings.ToLower(result[i].Name), strings.ToLower(result[j].Name)
 		if ni != nj {
 			return ni < nj
 		}
-		// Version descending (numeric comparison)
-		return compareVersions(result[i].Version, result[j].Version) > 0
+		if cmp := compareVersions(result[i].Version, result[j].Version); cmp != 0 {
+			return cmp > 0
+		}
+		pi, pj := result[i].Publisher, result[j].Publisher
+		if pi != pj {
+			return pi < pj
+		}
+		return result[i].Source < result[j].Source
 	})
 
 	return result
@@ -315,5 +324,11 @@ func (s ProgramSorter) Less(i, j int) bool {
 	if ni != nj {
 		return ni < nj
 	}
-	return compareVersions(s[i].Version, s[j].Version) > 0
+	if cmp := compareVersions(s[i].Version, s[j].Version); cmp != 0 {
+		return cmp > 0
+	}
+	if s[i].Publisher != s[j].Publisher {
+		return s[i].Publisher < s[j].Publisher
+	}
+	return s[i].Source < s[j].Source
 }

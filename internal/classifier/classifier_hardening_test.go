@@ -24,7 +24,7 @@ func TestClassify_PortOnlySignalDoesNotSynthesizeTool(t *testing.T) {
 	dialPort = func(_, address string, _ time.Duration) (net.Conn, error) {
 		if address == "127.0.0.1:8080" {
 			client, server := net.Pipe()
-			server.Close()
+			_ = server.Close()
 			return client, nil
 		}
 		return nil, os.ErrNotExist

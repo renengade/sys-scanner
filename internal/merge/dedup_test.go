@@ -1,6 +1,7 @@
 package merge
 
 import (
+	"fmt"
 	"sort"
 	"testing"
 
@@ -257,5 +258,32 @@ func TestDeduplicate_RawMetadataMerge(t *testing.T) {
 	}
 	if meta["key2"] != "val2" {
 		t.Errorf("expected key2=val2 (merged from lower priority), got %q", meta["key2"])
+	}
+}
+
+func TestDeduplicate_DeterministicAcrossShuffles(t *testing.T) {
+	programs := []types.Program{
+		{Name: "Same", Version: "1.0", Publisher: "Beta Corp", Source: "registry"},
+		{Name: "Same", Version: "1.0", Publisher: "Alpha Corp", Source: "store"},
+		{Name: "Same", Version: "2.0", Source: "PATH"},
+		{Name: "Unique", Version: "1.0", Source: "PATH"},
+	}
+
+	var first string
+	for i := 0; i < 25; i++ {
+		shuffled := make([]types.Program, len(programs))
+		copy(shuffled, programs)
+		// Rotate deterministically to exercise different input orders.
+		rot := i % len(shuffled)
+		copy(shuffled, append(shuffled[rot:], shuffled[:rot]...))
+
+		out := Deduplicate(shuffled)
+		if i == 0 {
+			first = fmt.Sprintf("%+v", out)
+			continue
+		}
+		if got := fmt.Sprintf("%+v", out); got != first {
+			t.Fatalf("iteration %d produced different order:\nfirst:  %s\ngot:    %s", i, first, got)
+		}
 	}
 }

@@ -94,12 +94,6 @@ func (s *Scanner) DetectContext(ctx context.Context) ([]types.Program, error) {
 	return finish(nil)
 }
 
-// scanPATH uses the shared PATH scanner with macOS-specific allowlist and
-// AI binary list.
-func (s *Scanner) scanPATH() ([]types.Program, error) {
-	return s.scanPATHContext(context.Background())
-}
-
 func (s *Scanner) scanPATHContext(ctx context.Context) ([]types.Program, error) {
 	pathEnv := os.Getenv("PATH")
 	if pathEnv == "" {

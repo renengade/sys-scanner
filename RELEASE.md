@@ -1,5 +1,22 @@
 # Release Notes — sys-scanner
 
+## 1.2.2
+
+### Code audit
+
+- `merge.Deduplicate` output is now fully deterministic (publisher/source
+  tiebreakers) even when sources are scanned concurrently or shuffled.
+- Windows Store scan forces UTF-8 console output so non-ASCII publisher names
+  (e.g. Chinese OEMs) survive `ConvertTo-Json`; a UTF-8 BOM in redirected
+  output is stripped before parsing.
+- App Paths now scans the 32-bit WOW64 registry view in addition to the
+  64-bit and HKCU views.
+- The XLSX summary falls back to the user temp directory when the folder next
+  to the executable is read-only.
+- Classifier binary-name comparison is case-insensitive on Windows.
+- Dead code removed; `staticcheck` is clean on Linux, Windows and Darwin
+  targets; `errcheck` is clean.
+
 ## 1.2.1
 
 ### Security

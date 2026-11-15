@@ -264,12 +264,21 @@ func binaryMatches(prog types.Program, tool types.ToolSignature, pathCache map[s
 	}
 
 	for _, name := range tool.BinaryNames {
-		if prog.Name == name && pathCache[name] {
+		if binaryNameEquals(prog.Name, name) && pathCache[name] {
 			return true
 		}
 	}
 
 	return false
+}
+
+// binaryNameEquals compares a program name against a signature binary name.
+// Windows file names are case-insensitive; other platforms compare exactly.
+func binaryNameEquals(progName, name string) bool {
+	if runtime.GOOS == "windows" {
+		return strings.EqualFold(progName, name)
+	}
+	return progName == name
 }
 
 // pathEndsWith returns true when the final path component of p equals name.
@@ -465,20 +474,6 @@ func hasExtensionIn(tool types.ToolSignature, entriesByDir map[string][]string) 
 
 // processTimeout is the maximum time to wait for process enumeration.
 const processTimeout = 5 * time.Second
-
-// hasProcess returns true when any of the tool's ProcessNames appears in the
-// system process list. It enumerates processes on each call and is kept for
-// tests; production callers use hasProcessIn with one shared process list.
-func hasProcess(tool types.ToolSignature) bool {
-	if len(tool.ProcessNames) == 0 {
-		return false
-	}
-	output, err := processLister()
-	if err != nil {
-		return false
-	}
-	return hasProcessIn(tool, output)
-}
 
 // hasProcessIn checks a tool's ProcessNames against a pre-fetched process
 // list. Matching is line-anchored rather than a raw substring search, so a

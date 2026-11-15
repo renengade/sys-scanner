@@ -164,7 +164,7 @@ func readExisting(path string) ([][]string, error) {
 		backupCorrupt(path)
 		return nil, nil
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	rows, err := f.GetRows(sheetName)
 	if err != nil {
@@ -225,7 +225,7 @@ func writeWorkbook(path string, rows [][]string) error {
 	}
 
 	f := excelize.NewFile()
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if err := f.SetSheetName("Sheet1", sheetName); err != nil {
 		return err

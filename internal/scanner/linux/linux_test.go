@@ -511,7 +511,7 @@ func TestLinuxScanner_Detect(t *testing.T) {
 	t.Setenv("PATH", "")
 	defer func() {
 		if origPath != "" {
-			os.Setenv("PATH", origPath)
+			_ = os.Setenv("PATH", origPath)
 		}
 	}()
 

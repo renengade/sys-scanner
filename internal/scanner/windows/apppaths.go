@@ -30,17 +30,19 @@ const (
 // (Default) value holds the full path to the binary.
 func scanAppPaths() ([]types.Program, error) {
 	views := []struct {
-		root  registry.Key
-		label string
+		root   registry.Key
+		access uint32
+		label  string
 	}{
-		{registry.LOCAL_MACHINE, "HKLM/App Paths"},
-		{registry.CURRENT_USER, "HKCU/App Paths"},
+		{registry.LOCAL_MACHINE, registry.READ | registry.WOW64_64KEY, "HKLM/App Paths (64-bit)"},
+		{registry.LOCAL_MACHINE, registry.READ | registry.WOW64_32KEY, "HKLM/App Paths (32-bit)"},
+		{registry.CURRENT_USER, registry.READ, "HKCU/App Paths"},
 	}
 
 	var programs []types.Program
 
 	for _, v := range views {
-		progs, err := scanAppPathsView(v.root, v.label)
+		progs, err := scanAppPathsView(v.root, v.access, v.label)
 		if err != nil {
 			slog.Warn("App Paths scan failed", "view", v.label, "error", err)
 			continue
@@ -51,8 +53,8 @@ func scanAppPaths() ([]types.Program, error) {
 }
 
 // scanAppPathsView reads a single App Paths registry hive.
-func scanAppPathsView(root registry.Key, label string) ([]types.Program, error) {
-	k, err := registry.OpenKey(root, appPathsKeyPath, registry.READ|registry.WOW64_64KEY)
+func scanAppPathsView(root registry.Key, access uint32, label string) ([]types.Program, error) {
+	k, err := registry.OpenKey(root, appPathsKeyPath, access)
 	if err != nil {
 		return nil, err
 	}
