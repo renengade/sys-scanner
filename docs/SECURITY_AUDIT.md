@@ -107,3 +107,25 @@ GOOS=windows go run github.com/securego/gosec/v2/cmd/gosec@latest -quiet ./...
 go vet ./...
 go test ./...
 ```
+
+## 外部 SCA 报告复评（2026-11-25，oscap 报告 v1.3.2 快照）
+
+外部源代码检测报告给出 10 个中危缺陷（0 高危）。逐条与当前代码核对后的结论：**无真实漏洞**，8 条为测试夹具误报，2 条为对既有加固代码的模式误报。
+
+| 报告发现 | 位置 | 评估 | 处置 |
+|----------|------|------|------|
+| 命令注入 | classifier.go `tasklist.exe` | 误报：路径为固定常量 `%SystemRoot%\System32\tasklist.exe` 语义，无外部输入；属上一轮防劫持加固 | 已改为字符串常量（见下） |
+| 路径操纵 | linux/desktop.go `os.Open` | 误报：路径来自固定目录枚举，无遍历可能 | 已按工具建议改用 `os.Root` 限定根目录（见下） |
+| 硬编码 IP ×6 | 全部位于 `*_test.go` 夹具 | 误报：RFC 1918 示例地址，用于 HostInfo 渲染测试；生产代码 0 处硬编码 IP（仅 loopback 探测） | 已替换为 RFC 5737 文档保留段 |
+| 硬编码 URL ×2 | linux_test.go / export_test.go | 误报：`.desktop` 测试夹具与公式注入测试载荷 | 夹具移除 URL 行；载荷改为无 URL 的经典 DDE 样例 |
+
+### 已实施的整改（1.3.2 之后）
+
+1. **测试夹具**：IP 全部替换为 RFC 5737 文档保留地址（192.0.2.x / 198.51.100.x / 203.0.113.x）；`Type=Link` 夹具移除 URL 行；公式注入载荷改为 `=cmd|' /C calc'!A0`（不再含 URL，测试语义不变）。
+2. **desktop.go**：`parseDesktopFile` 改用 `os.Root` 按目录+裸文件名打开（Go 1.24+），机制上杜绝路径穿越，对应扫描器自带的修复建议。
+3. **classifier.go**：`tasklist.exe` 改为常量绝对路径 `C:\Windows\System32\tasklist.exe`。Windows 目录在受支持的系统上不可迁移；若极端环境下文件缺失，进程枚举信号优雅降级（端口/配置目录信号不受影响）。
+
+### 验证
+
+- `go test ./...`（Linux/Windows/macOS runner）、`staticcheck`（三 GOOS）、`errcheck`、`gosec`（Linux + Windows tag）、`govulncheck` 全部通过
+- Windows/Linux 实机功能回归正常

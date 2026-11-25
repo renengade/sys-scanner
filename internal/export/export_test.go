@@ -77,7 +77,9 @@ func TestCSV_HasProgramRows(t *testing.T) {
 
 func TestCSV_FormulaInjectionIsNeutralized(t *testing.T) {
 	inv := sampleInventory()
-	inv.Programs[0].Name = "=HYPERLINK(\"http://evil\")"
+	// Classic DDE injection payload (OWASP); the leading "=" is what the
+	// sanitizer must neutralize — no real host is referenced.
+	inv.Programs[0].Name = "=cmd|' /C calc'!A0"
 
 	var buf bytes.Buffer
 	if err := CSV(&buf, inv); err != nil {

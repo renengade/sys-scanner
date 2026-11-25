@@ -60,11 +60,11 @@ func TestBuildWithHost(t *testing.T) {
 		Hostname:     "ws-01",
 		OS:           "windows",
 		Arch:         "amd64",
-		IPAddresses:  []string{"10.0.0.5"},
+		IPAddresses:  []string{"192.0.2.5"},
 		MACAddresses: []string{"aa:bb:cc:dd:ee:ff"},
 	}
 	inv := BuildWithHost(nil, 0, "1.2.0", host)
-	if inv.Host.Hostname != "ws-01" || inv.Host.IPAddresses[0] != "10.0.0.5" {
+	if inv.Host.Hostname != "ws-01" || inv.Host.IPAddresses[0] != "192.0.2.5" {
 		t.Errorf("host = %+v", inv.Host)
 	}
 	if inv.Host.MACAddresses[0] != "aa:bb:cc:dd:ee:ff" {

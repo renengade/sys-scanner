@@ -87,7 +87,6 @@ func TestParseDesktopFile_NotApplication(t *testing.T) {
 	content := `[Desktop Entry]
 Type=Link
 Name=A Link
-URL=https://example.com
 `
 	path := filepath.Join(dir, "link.desktop")
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {

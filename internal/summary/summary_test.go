@@ -21,7 +21,7 @@ func testInventory(hostname, osName, mac string, programs []types.Program) types
 			Hostname:     hostname,
 			OS:           osName,
 			Arch:         "amd64",
-			IPAddresses:  []string{"192.168.1.20"},
+			IPAddresses:  []string{"203.0.113.20"},
 			MACAddresses: []string{mac},
 		},
 		Programs: programs,

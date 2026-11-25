@@ -16,11 +16,11 @@ func TestNewReportDataWithHost_IPAndMAC(t *testing.T) {
 		Hostname:     "ws-01",
 		OS:           "windows",
 		Arch:         "amd64",
-		IPAddresses:  []string{"192.168.1.10", "fe80::1"},
+		IPAddresses:  []string{"198.51.100.10", "fe80::1"},
 		MACAddresses: []string{"aa:bb:cc:dd:ee:ff"},
 	}
 	data := NewReportDataWithHost("windows", host, samplePrograms(), 1500*time.Millisecond)
-	if data.IPAddresses != "192.168.1.10, fe80::1" {
+	if data.IPAddresses != "198.51.100.10, fe80::1" {
 		t.Errorf("IPAddresses = %q", data.IPAddresses)
 	}
 	if data.MACAddresses != "aa:bb:cc:dd:ee:ff" {
@@ -33,7 +33,7 @@ func TestNewReportDataWithHost_IPAndMAC(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"192.168.1.10", "aa:bb:cc:dd:ee:ff", ">IP<", ">MAC<"} {
+	for _, want := range []string{"198.51.100.10", "aa:bb:cc:dd:ee:ff", ">IP<", ">MAC<"} {
 		if !strings.Contains(string(out), want) {
 			t.Errorf("report missing %q", want)
 		}
